@@ -1,0 +1,30 @@
+%{
+
+# include<map>
+# define $SYMBOL   1
+# define $CONSTANT 2
+# define $INT      3
+# define $IF       4
+# define $ELSE     5
+# define $WHILE    6
+# define $FOR      7
+# define $READ     8
+# define $WRITE    9
+# define $ADD      10
+# define $SUB      11
+# define $MUL      12
+# define $DIV      13
+
+
+%}
+
+DIGIT   [0-9]
+ID  [a-zA-Z][a-zA-Z0-9]*
+
+%%
+
+
+
+%%
+
+
