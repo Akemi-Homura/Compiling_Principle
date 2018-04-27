@@ -1,0 +1,106 @@
+%{
+
+# include<map>
+# include<string>
+# include<cstdio>
+# include<iostream>
+# define $SYMBOL   1
+# define $CONSTANT 2
+# define $INT      3
+# define $IF       4
+# define $ELSE     5
+# define $WHILE    6
+# define $FOR      7
+# define $READ     8
+# define $WRITE    9
+# define $ADD      10
+# define $SUB      11
+# define $MUL      12
+# define $DIV      13
+# define $L        14
+# define $LE       15
+# define $G        16
+# define $GE       17
+# define $NE       18
+# define $E        19
+# define $ASSIGN   20
+# define $LPAR     21
+# define $RPAR     22
+# define $COM      23
+# define $SEM      24
+
+std::map<std::string,int> SymbolTable;
+std::map<int,int>         NumberTable;
+template<typename T>
+void FoundConstantOrNumber(int,T,std::map<T,int>*);
+void OutputRes(int,int=-1);
+
+%}
+
+DIGIT   [0-9]
+ID  [a-zA-Z][a-zA-Z0-9]*
+SPACE [ \n\t\r]+
+
+%%
+
+"<="  OutputRes($LE);
+"<"   OutputRes($L);
+">="  OutputRes($GE);
+">"   OutputRes($G);
+"=="  OutputRes($E);
+"="   OutputRes($ASSIGN);
+"!="  OutputRes($NE);
+"+"   OutputRes($ADD);
+"-"   OutputRes($SUB);
+"*"   OutputRes($MUL);
+"/"   OutputRes($DIV);
+"("   OutputRes($LPAR);
+")"   OutputRes($RPAR);
+","   OutputRes($COM);
+";"   OutputRes($SEM);
+int OutputRes($INT);
+if OutputRes($IF);
+else OutputRes($ELSE);
+while OutputRes($WHILE);
+for OutputRes($FOR);
+read OutputRes($READ);
+write OutputRes($WRITE);
+{ID}   FoundConstantOrNumber<std::string>($SYMBOL,yytext,&SymbolTable);
+{DIGIT}{DIGIT}* {
+    int key;
+    sscanf(yytext,"%d",&key);
+    FoundConstantOrNumber<int>($CONSTANT,key,&NumberTable);
+}
+{SPACE}
+.
+
+
+%%
+
+template<typename T>
+void FoundConstantOrNumber(int type,T key,std::map<T,int>* table){
+    int res;
+    if(table->find(key) == table->end()){
+        std::cout<<key<<std::endl;
+        res = table->size() + 1;
+        (*table)[key] = res;
+        printf("table's size: %lu\n",table->size());
+    }else{
+        res = (*table)[key];
+    }
+    OutputRes(type,res);
+}
+
+void OutputRes(int key,int res){
+    fprintf(yyout,"%-8s: ( %d, %d )\n",yytext,key,res);
+}
+
+int main(int argc,char * argv[]){
+    yyin = fopen(argv[1],"r");
+    if(argc >= 3) yyout = fopen(argv[2],"w");
+    yylex();
+    fclose(yyin);
+    fclose(yyout);
+}
+
+
