@@ -4,6 +4,12 @@
 # include<string>
 # include<cstdio>
 # include<iostream>
+# include "rapidxml.hpp"
+# include "rapidxml_print.hpp"
+# include "rapidxml_utils.hpp"
+# include "rapidxml_iterators.hpp"
+
+using namespace rapidxml;
 # define $SYMBOL   1
 # define $CONSTANT 2
 # define $INT      3
@@ -31,6 +37,8 @@
 
 std::map<std::string,int> SymbolTable;
 std::map<int,int>         NumberTable;
+xml_document<> doc;
+xml_node<>* root;
 template<typename T>
 void FoundConstantOrNumber(int,T,std::map<T,int>*);
 void OutputRes(int,int=-1);
@@ -81,10 +89,9 @@ template<typename T>
 void FoundConstantOrNumber(int type,T key,std::map<T,int>* table){
     int res;
     if(table->find(key) == table->end()){
-        std::cout<<key<<std::endl;
         res = table->size() + 1;
         (*table)[key] = res;
-        printf("table's size: %lu\n",table->size());
+        /* printf("table's size: %lu\n",table->size()); */
     }else{
         res = (*table)[key];
     }
@@ -92,13 +99,30 @@ void FoundConstantOrNumber(int type,T key,std::map<T,int>* table){
 }
 
 void OutputRes(int key,int res){
-    fprintf(yyout,"%-8s: ( %d, %d )\n",yytext,key,res);
+    xml_node<> *node = doc.allocate_node(node_element,"word",0);
+    char str_key[10];
+    char str_res[10];
+    sprintf(str_key,"%d",key);
+    sprintf(str_res,"%d",res);
+    char* node_key = doc.allocate_string(str_key);
+    char* node_res = doc.allocate_string(str_res);
+    xml_node<> *key_node = doc.allocate_node(node_element,"key",node_key);
+    xml_node<> *value_node = doc.allocate_node(node_element,"value",node_res);
+    root->append_node(node);
+    node->append_node(key_node);
+    node->append_node(value_node);
+    /* fprintf(yyout,"%-8s: ( %d, %d )\n",yytext,key,res); */
 }
 
 int main(int argc,char * argv[]){
+    root = doc.allocate_node(node_element,"doc",0);
+    doc.append_node(root);
     yyin = fopen(argv[1],"r");
-    if(argc >= 3) yyout = fopen(argv[2],"w");
+    /* if(argc >= 3) yyout = fopen(argv[2],"w"); */
     yylex();
+    /* std::ofstream stream = std::ofstream(argv[2]); */
+    std::cout << doc;
+    /* print(std::out,doc,0); */
     fclose(yyin);
     fclose(yyout);
 }
