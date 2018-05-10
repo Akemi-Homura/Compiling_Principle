@@ -1,0 +1,6 @@
+int k;
+read(k);
+int ans = 1;
+for(int i=1;i<=k;i++)
+    ans = ans * i;
+write(ans);
