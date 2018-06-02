@@ -1,0 +1,128 @@
+%{
+    # include <stdlib.h>
+    # include "parse.h"
+    # include "y.tab.h"
+    void yyerror(const char *);
+%}
+
+DIGIT   [0-9]
+LETTER  [a-zA-Z]
+SPACE   [ \n\t\r]+
+
+%%
+
+"<="                        {
+                                yylval.id = yytext;
+                                return LE;
+                            }
+
+"<"                         {
+                                yylval.id = yytext;
+                                return L;
+                            }
+
+">="                        {
+                                yylval.id = yytext;
+                                return GE;
+                            }
+
+"-"                         {
+                                yylval.id = yytext;
+                                return MINUS;
+                            }
+
+"*"                         {
+                                yylval.id = yytext;
+                                return MUL;
+                            }
+
+">"                         {
+                                yylval.id = yytext;
+                                return G;
+                            }
+
+"=="                        {
+                                yylval.id = yytext;
+                                return E;
+                            }
+
+"begin"                     {
+                                yylval.id = yytext;
+                                return PARSE_BEGIN;
+                            }
+
+"end"                       {
+                                yylval.id = yytext;
+                                return PARSE_END;
+                            }
+
+";"                         {
+                                yylval.id = yytext;
+                                return SEM;
+                            }
+
+"("                         {
+                                yylval.id = yytext;
+                                return LPAR;
+                            }
+
+")"                         {
+                                yylval.id = yytext;
+                                return RPAR;
+                            }
+
+"read"                      {
+                                yylval.id = yytext;
+                                return READ;
+                            }
+
+"write"                     {
+                                yylval.id = yytext;
+                                return WRITE;
+                            }
+
+":="                        {
+                                yylval.id = yytext;
+                                return ASSIGN;
+                            }
+
+"integer"                   {
+                                yylval.id = yytext;
+                                return INTEGER;
+                            }
+
+"function"                  {
+                                yylval.id = yytext;
+                                return FUNCTION;
+                            }
+
+"if"                        {
+                                yylval.id = yytext;
+                                return IF;
+                            }
+
+"else"                      {
+                                yylval.id = yytext;
+                                return ELSE;
+                            }
+
+"then"                      {
+                                yylval.id = yytext;
+                                return THEN;
+                            }
+
+{LETTER}({LETTER}|{DIGIT})* {
+                                yylval.id = yytext;
+                                return IDENTIFIER;
+                            }
+
+0|[1-9][0-9]*               {
+                                yylval.iValue = atoi(yytext);
+                                return UNSIGNED_INTEGER;
+                            }
+
+{SPACE}                     ;
+
+.                           yyerror("Unkown character");
+
+%%

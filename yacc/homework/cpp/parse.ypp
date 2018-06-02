@@ -1,0 +1,301 @@
+%{
+# include <stdio.h>
+# include <stdlib.h>
+# include <stdarg.h>
+# include <string.h>
+# include "parse.h"
+# include "rapidxml.hpp"
+# include "rapidxml_print.hpp"
+# include "rapidxml_utils.hpp"
+# include "rapidxml_iterators.hpp"
+
+using namespace rapidxml;
+
+nodeType *opr(const char* name,int nops, ...);
+nodeType *id(char* text);
+nodeType *con(int vale);
+void freeNode(nodeType *p);
+xml_node<>* ex(nodeType *p);
+int yylex(void);
+void yyerror(const char *s);
+
+#define YYDEBUG 0
+
+#ifdef DEBUG
+#define TRACE printf("reduce at line %d\n",__LINE__);
+#else
+#define TRACE
+#endif
+%}
+
+%union {
+    int iValue;
+    char *id;
+    nodeType *nPtr;
+}
+
+%token <iValue> UNSIGNED_INTEGER
+%token <id> MINUS MUL IDENTIFIER FUNCTION PARSE_BEGIN PARSE_END SEM INTEGER LPAR RPAR READ WRITE LE L GE G E NE  ASSIGN IF ELSE THEN
+
+%left LE L GE G E NE
+
+%type <nPtr> sub_program begin end sem enunciation_list enunciation var_enunciation integer variable fun_enunciation lpar rpar function param function_body execute_list execute read_function read write_function write assign_stmt assign expr minus item mul factor constant fun_call condition if then else condition_expr le l g e ne
+
+%%
+
+program:
+        sub_program                 { ex(opr("program",1,$1)); exit(0); }
+        ;
+
+sub_program:
+            begin enunciation_list sem execute_list end     { TRACE $$ = opr("sub_program",5,$1,$2,$3,$4,$5); }
+          ;
+
+begin:
+     PARSE_BEGIN                          { TRACE $$ = id($1); }
+     ;
+
+end:
+   PARSE_END                              { TRACE $$ = id($1); }
+   ;
+
+sem:
+         SEM                        { TRACE $$ = id($1); }
+         ;
+
+enunciation_list:
+              enunciation           { TRACE $$ = opr("enunciation list",1,$1); }
+            | enunciation_list sem enunciation  { TRACE $$ = opr("enunciation list",3,$1,$2,$3); }
+            ;
+
+enunciation:
+              var_enunciation                   { TRACE $$ = opr("enunciation",1,$1); }
+            | fun_enunciation                   { TRACE $$ = opr("enunciation",1,$1); }
+            ;
+
+var_enunciation:
+                integer variable                { TRACE $$ = opr("variable enunciation",2,$1,$2); }
+                ;
+
+integer:
+       INTEGER                      { TRACE $$ = id($1); }
+        ;
+
+variable:
+        IDENTIFIER                  { TRACE $$ = id($1); }
+        ;
+
+fun_enunciation:
+                integer function IDENTIFIER lpar param rpar sem function_body { TRACE $$ = opr("function enunciation",8,$1,$2,$3,$4,$5,$6,$7,$8); }
+                ;
+
+lpar:
+                LPAR    { TRACE $$ = id($1); }
+                ;
+
+rpar:
+                RPAR    { TRACE $$ = id($1); }
+                ;
+
+function:
+        FUNCTION        { TRACE $$ = id($1); }
+        ;
+
+param:
+     variable           { TRACE $$ = opr("parameter",1,$1); }
+     ;
+
+function_body:
+             begin enunciation_list sem execute_list end { TRACE $$ = opr("function body",5,$1,$2,$3,$4,$5); }
+             ;
+
+execute_list:
+              execute                                    { TRACE $$ = opr("execute list",1,$1); }
+            | execute_list sem execute                   { TRACE $$ = opr("execute list",3,$1,$2,$3); }
+            ;
+
+execute:
+          read_function                                  { TRACE $$ = opr("execute statement",1,$1); }
+        | write_function                                 { TRACE $$ = opr("execute statement",1,$1); }
+        | assign_stmt                                    { TRACE $$ = opr("execute statement",1,$1); }
+        | condition                                      { TRACE $$ = opr("execute statement",1,$1); }
+        ;
+
+read_function:
+    read lpar variable rpar                              { TRACE $$ = opr("read function",4,$1,$2,$3,$4); }
+    ;
+
+read:
+    READ                                                 { TRACE $$ = id($1); }
+    ;
+
+write_function:
+     write lpar variable rpar                            { TRACE $$ = opr("write function",4,$1,$2,$3,$4); }
+     ;
+
+write:
+     WRITE                                               { TRACE $$ = id($1); }
+     ;
+
+assign_stmt:
+      variable assign expr                               { TRACE $$ = opr("assign statement",3,$1,$2,$3); }
+      ;
+
+assign:
+          ASSIGN                                         { TRACE $$ = id($1); }
+          ;
+
+expr:
+      expr minus item                                    { TRACE $$ = opr("expression",3,$1,$2,$3); }
+    | item                                               { TRACE $$ = opr("expression",1,$1); }
+    ;
+
+minus:
+     MINUS                                               { TRACE $$ = id($1); }
+     ;
+
+item:
+      item mul factor                                    { TRACE $$ = opr("item",3,$1,$2,$3); }
+    | factor                                             { TRACE $$ = opr("item",1,$1); }
+    ;
+
+mul:
+   MUL                                                   { TRACE $$ = id($1); }
+   ;
+
+factor:
+       variable                                          { TRACE $$ = opr("factor",1,$1); }
+     | constant                                          { TRACE $$ = opr("factor",1,$1); }
+     | fun_call                                          { TRACE $$ = opr("factor",1,$1); }
+     ;
+
+constant:
+        UNSIGNED_INTEGER                                 { TRACE $$ = con($1); }
+        ;
+
+fun_call:
+        variable lpar expr rpar                          { TRACE $$ = opr("function call",4,$1,$2,$3,$4); }
+        ;
+
+condition:
+         if condition_expr then execute else execute     { TRACE $$ = opr("condition statement",6,$1,$2,$3,$4,$5,$6); }
+         ;
+
+if:
+  IF                                                     { TRACE $$ = id($1); }
+  ;
+
+then:
+    THEN                                                 { TRACE $$ = id($1); }
+    ;
+
+else:
+    ELSE                                                 { TRACE $$ = id($1); }
+    ;
+
+condition_expr:
+                expr le expr                             { TRACE $$ = opr("condition expression",3,$1,$2,$3); }
+              | expr l expr                              { TRACE $$ = opr("condition expression",3,$1,$2,$3); }
+              | expr g expr                              { TRACE $$ = opr("condition expression",3,$1,$2,$3); }
+              | expr e expr                              { TRACE $$ = opr("condition expression",3,$1,$2,$3); }
+              | expr ne expr                             { TRACE $$ = opr("condition expression",3,$1,$2,$3); }
+              ;
+
+le:
+  LE                                                     { TRACE $$ = id($1); }
+  ;
+
+l:
+ L                                                       { TRACE $$ = id($1); }
+ ;
+
+g:
+ G                                                       { TRACE $$ = id($1); }
+ ;
+
+e:
+ E                                                       { TRACE $$ = id($1); }
+ ;
+
+ne:
+  NE                                                     { TRACE $$ = id($1); }
+  ;
+
+%%
+
+nodeType *con(int value){
+    nodeType *p;
+
+    if( (p = (nodeType*)malloc(sizeof(nodeType))) == NULL)
+        yyerror("out of memory");
+
+    p->type = typeCon;
+    const char *tmp = "Constant";
+    p->name = (char*)malloc(strlen(tmp));
+    strcpy(p->name,tmp);
+
+    p->con  = value;
+
+    return p;
+}
+
+nodeType *id(char *text){
+    nodeType *p;
+
+    if( (p = (nodeType*)malloc(sizeof(nodeType))) == NULL)
+        yyerror("out of memory");
+
+    p->type = typeId;
+    const char *tmp = "Terminal symbol";
+    p->name = (char*)malloc(strlen(tmp));
+    strcpy(p->name,tmp);
+
+    p->id = text;
+
+    return p;
+}
+
+nodeType *opr(const char* name,int nops, ...){
+    va_list ap;
+    nodeType *p;
+    int i;
+
+    if( ( p = (nodeType*)malloc(sizeof(nodeType))) == NULL)
+        yyerror("out of memory");
+    if( ( p->opr.op = (nodeType**)malloc(nops* sizeof(nodeType))) == NULL)
+        yyerror("out of memory");
+
+    p->type = typeOpr;
+    p->name = (char*)malloc(strlen(name));
+    strcpy(p->name,name);
+
+    p->opr.nops = nops;
+    va_start(ap,nops);
+    for(int i=0; i < nops; i++)
+        p->opr.op[i] = va_arg(ap,nodeType*);
+    va_end(ap);
+    return p;
+}
+
+void freeNode(nodeType *p){
+    int i;
+    if(!p) return;
+    if (p->type == typeOpr) {
+        for (int i=0; i< p->opr.nops; i++)
+            freeNode(p->opr.op[i]);
+        free(p->opr.op);
+    }
+    free (p);
+}
+
+void yyerror(const char *s){
+    fprintf(stdout, "%s\n", s);
+}
+
+int main(){
+    #if YYDEBUG
+        yydebug = 1;
+    #endif
+    yyparse();
+    return 0;
+}
