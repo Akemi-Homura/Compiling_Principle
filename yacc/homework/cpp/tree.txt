@@ -1,0 +1,170 @@
+<program>
+	<sub_program>
+		<Terminal symbol>begin</Terminal symbol>
+		<enunciation list>
+			<enunciation list>
+				<enunciation>
+					<variable enunciation>
+						<Terminal symbol>integer</Terminal symbol>
+						<Terminal symbol>m</Terminal symbol>
+					</variable enunciation>
+				</enunciation>
+			</enunciation list>
+			<Terminal symbol>;</Terminal symbol>
+			<enunciation>
+				<function enunciation>
+					<Terminal symbol>integer</Terminal symbol>
+					<Terminal symbol>function</Terminal symbol>
+					<Terminal symbol>F</Terminal symbol>
+					<Terminal symbol>(</Terminal symbol>
+					<parameter>
+						<Terminal symbol>n</Terminal symbol>
+					</parameter>
+					<Terminal symbol>)</Terminal symbol>
+					<Terminal symbol>;</Terminal symbol>
+					<function body>
+						<Terminal symbol>begin</Terminal symbol>
+						<enunciation list>
+							<enunciation>
+								<variable enunciation>
+									<Terminal symbol>integer</Terminal symbol>
+									<Terminal symbol>n</Terminal symbol>
+								</variable enunciation>
+							</enunciation>
+						</enunciation list>
+						<Terminal symbol>;</Terminal symbol>
+						<execute list>
+							<execute statement>
+								<condition statement>
+									<Terminal symbol>if</Terminal symbol>
+									<condition expression>
+										<expression>
+											<item>
+												<factor>
+													<Terminal symbol>n</Terminal symbol>
+												</factor>
+											</item>
+										</expression>
+										<Terminal symbol>&lt;=</Terminal symbol>
+										<expression>
+											<item>
+												<factor>
+													<Constant>0</Constant>
+												</factor>
+											</item>
+										</expression>
+									</condition expression>
+									<Terminal symbol>then</Terminal symbol>
+									<execute statement>
+										<assign statement>
+											<Terminal symbol>F</Terminal symbol>
+											<Terminal symbol>:=</Terminal symbol>
+											<expression>
+												<item>
+													<factor>
+														<Constant>1</Constant>
+													</factor>
+												</item>
+											</expression>
+										</assign statement>
+									</execute statement>
+									<Terminal symbol>else</Terminal symbol>
+									<execute statement>
+										<assign statement>
+											<Terminal symbol>F</Terminal symbol>
+											<Terminal symbol>:=</Terminal symbol>
+											<expression>
+												<item>
+													<item>
+														<factor>
+															<Terminal symbol>n</Terminal symbol>
+														</factor>
+													</item>
+													<Terminal symbol>*</Terminal symbol>
+													<factor>
+														<function call>
+															<Terminal symbol>F</Terminal symbol>
+															<Terminal symbol>(</Terminal symbol>
+															<expression>
+																<expression>
+																	<item>
+																		<factor>
+																			<Terminal symbol>n</Terminal symbol>
+																		</factor>
+																	</item>
+																</expression>
+																<Terminal symbol>-</Terminal symbol>
+																<item>
+																	<factor>
+																		<Constant>1</Constant>
+																	</factor>
+																</item>
+															</expression>
+															<Terminal symbol>)</Terminal symbol>
+														</function call>
+													</factor>
+												</item>
+											</expression>
+										</assign statement>
+									</execute statement>
+								</condition statement>
+							</execute statement>
+						</execute list>
+						<Terminal symbol>end</Terminal symbol>
+					</function body>
+				</function enunciation>
+			</enunciation>
+		</enunciation list>
+		<Terminal symbol>;</Terminal symbol>
+		<execute list>
+			<execute list>
+				<execute list>
+					<execute statement>
+						<read function>
+							<Terminal symbol>read</Terminal symbol>
+							<Terminal symbol>(</Terminal symbol>
+							<Terminal symbol>m</Terminal symbol>
+							<Terminal symbol>)</Terminal symbol>
+						</read function>
+					</execute statement>
+				</execute list>
+				<Terminal symbol>;</Terminal symbol>
+				<execute statement>
+					<assign statement>
+						<Terminal symbol>m</Terminal symbol>
+						<Terminal symbol>:=</Terminal symbol>
+						<expression>
+							<item>
+								<factor>
+									<function call>
+										<Terminal symbol>F</Terminal symbol>
+										<Terminal symbol>(</Terminal symbol>
+										<expression>
+											<item>
+												<factor>
+													<Terminal symbol>m</Terminal symbol>
+												</factor>
+											</item>
+										</expression>
+										<Terminal symbol>)</Terminal symbol>
+									</function call>
+								</factor>
+							</item>
+						</expression>
+					</assign statement>
+				</execute statement>
+			</execute list>
+			<Terminal symbol>;</Terminal symbol>
+			<execute statement>
+				<write function>
+					<Terminal symbol>write</Terminal symbol>
+					<Terminal symbol>(</Terminal symbol>
+					<Terminal symbol>m</Terminal symbol>
+					<Terminal symbol>)</Terminal symbol>
+				</write function>
+			</execute statement>
+		</execute list>
+		<Terminal symbol>end</Terminal symbol>
+	</sub_program>
+</program>
+
