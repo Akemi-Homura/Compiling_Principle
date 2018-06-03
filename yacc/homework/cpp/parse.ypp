@@ -16,6 +16,7 @@ nodeType *id(char* text);
 nodeType *con(int vale);
 void freeNode(nodeType *p);
 xml_node<>* ex(nodeType *p);
+void display(xml_node<>* root);
 int yylex(void);
 void yyerror(const char *s);
 
@@ -44,7 +45,7 @@ void yyerror(const char *s);
 %%
 
 program:
-        sub_program                 { ex(opr("program",1,$1)); exit(0); }
+        sub_program                 { display(ex(opr("program",1,$1))); freeNode($1); exit(0); }
         ;
 
 sub_program:
@@ -86,7 +87,7 @@ variable:
         ;
 
 fun_enunciation:
-                integer function IDENTIFIER lpar param rpar sem function_body { TRACE $$ = opr("function enunciation",8,$1,$2,$3,$4,$5,$6,$7,$8); }
+                integer function variable lpar param rpar sem function_body { TRACE $$ = opr("function enunciation",8,$1,$2,$3,$4,$5,$6,$7,$8); }
                 ;
 
 lpar:
@@ -250,7 +251,8 @@ nodeType *id(char *text){
     p->name = (char*)malloc(strlen(tmp));
     strcpy(p->name,tmp);
 
-    p->id = text;
+    p->id = (char*)malloc(strlen(text));
+    strcpy(p->id,text);
 
     return p;
 }
