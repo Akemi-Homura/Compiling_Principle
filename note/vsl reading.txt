@@ -1,0 +1,171 @@
+----------------------
+vsl grammar
+----------------------
+program                 :       function_list
+function_list           :       function
+                        |       function_list function
+function                :       FUNC VARIABLE '(' parameter_list ')'
+                                statement
+                        |       error
+parameter_list          :       variable_list
+                        |
+variable_list           :       VARIABLE
+                        |       variable_list ',' VARIABLE
+statement               :       assignment_statement
+                        |       return_statement
+                        |       print_statement
+                        |       null_statement
+                        |       if_statement
+                        |       while_statement
+                        |       block
+                        |       error
+assignment_statement    :       VARIABLE ASSIGN_SYMBOL expression
+expression              :       expression '+' expression
+                        |       expression '-' expression
+                        |       expression '*' expression
+                        |       expression '/' expression
+                        |       '-' expression  %prec UMINUS
+                        |       '(' expression ')'
+                        |       INTEGER
+                        |       VARIABLE
+                        |       VARIABLE '(' argument_list ')'
+                        |       error
+argument_list           :
+                        |       expression_list
+expression_list         :       expression
+                        |       expression ',' expression_list
+print_statement         :       PRINT print_list
+print_list              :       print_item
+                        |       print_list ',' print_item
+print_item              :       expression
+                        |       TEXT
+return_statement        :       RETURN expression
+null_statement          :       CONTINUE
+if_statement            :       IF expression THEN statement FI
+                        |       IF expression THEN statement
+                                ELSE statement FI
+while_statement         :       WHILE expression DO statement DONE
+block                   :       '{' declaration_list statement_list '}'
+declaration_list        :
+                        |       declaration_list declaration
+declaration             :       VAR variable_list
+statement_list          :       statement
+                        |       statement_list statement
+----------------------------------
+main.c
+
+parser.y -> (parser.c)
+parser.h
+
+
+scanner.l -> (scanner.c)
+scanner.h
+
+
+vc.h
+cg.c
+
+-----------------------
+hello.vsl
+./vc hello.vsl   ->   hello.vas
+
+hello.vas
+./vas hello.vas   ->   hello.vam
+
+hello.vam
+./vam hello.vam   -> 解释执行,得到结果
+
+
+
+
+--------------
+scanner.l  89  114
+parser.y 155  429
+
+cg-tac.c  ->   cg.c  
+main-tac.c  ->  main.c
+
+tac:  three address code
+
+VARIABLE,INTEGER,TEXT:  3个终结符的语义值,是SYMB *symb类型
+其它终结符不需要语义值
+
+expression,expression_list,argument_list: 3个非终结符的语义值,是ENODE  *enode 类型
+其它非终结符的语义值,都是TAC    *tac类型
+
+mkname()
+新建一个符号节点，保存该标识符，或返回已有符号节点
+
+mkval()
+新建一个符号节点，保存该整数，或返回已有符号节点（0~4）
+
+mktext()
+新建一个符号节点，保存该字符串，或返回已有符号节点
+
+
+--------------------------------
+rdesc:  寄存器描述符
+struct                                   /* Reg descriptor */
+{
+        struct symb *name ;              /* Thing in reg */
+        int          modified ;          /* If needs spilling */
+}    rdesc[R_MAX] ;
+
+init_cg(初始化寄存器描述符)  > rdesc(寄存器描述符) > insert_desc 0 (把0号寄存器分配给常量0)
+load_reg(把变量值从内存加载到寄存器) > insert_desc(把寄存器分配给变量)
+clear_desc(释放某个寄存器)
+flush_all(释放全部寄存器)
+spill_one(回写内存,把某个寄存器的值,拷贝到对应变量的内存地址)
+spill_all(回写内存,全部寄存器)
+
+赋值语句的翻译
+cg_instr(将某条三地址码翻译为汇编代码）  > switch( c->op )
+
+/* a := b　*/
+cg_copy( c->VA, c->VB ) /* a（c->VA  ） := b（c->VB ） */   >  get_rreg（为每个变量分配寄存器，并把变量值从内容拷贝到该寄存器）
+
+ /* a := b + c */
+cg_bin( "ADD", c->VA, c->VB, c->VC )   >  get_rreg和get_areg
+ADD  R5,R6
+
+转移语句的翻译
+/* goto a */
+cg_cond( "BRA", NULL, c->LA->VA->VAL1 )
+printf( "       BRA  L10\n", op, l )
+/* ifz b goto a */
+cg_cond( "BZE", c->VB, c->LA->VA->VAL1 )
+/* ifnz b goto a */
+cg_cond( "BNZ", c->VB, c->LA->VA->VAL1 ) ;
+printf( "       LDR  R%u,R%u\n", r, r ) ;
+
+函数定义的翻译
+
+活动记录：
+#define P_OFF           0                /* Offset of stack pointer on frame */
+#define PC_OFF          4                /* Offset of ret address on frame */
+#define VAR_OFF         8                /* Offset of variables on frame */
+
+函数定义开始：case TAC_BEGINFUNC:
+tos = VAR_OFF
+STI  R3,4(R1)
+
+定义局部变量：case TAC_VAR:
+c->VA->ADDR2 = tos ;
+tos += 4 ;
+
+函数定义结束：case TAC_ENDFUNC:
+cg_return
+
+函数调用的翻译： case TAC_ARG:
+arg x
+arg y
+cg_arg 跳过新活动记录的前两个字段（动态连接、返回地址），存入参数区
+
+
+z = call L15　　case TAC_CALL:
+/* a := call b */
+cg_call( c->LB->VA->VAL1, c->VA )建立新活动记录，跳转到被调函数，返回后一条指令（可选）
+
+return a　　case TAC_RETURN:
+cg_return 保存返回值（可选)，恢复原活动记录、跳转到返回地址
+
